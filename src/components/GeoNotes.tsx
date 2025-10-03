@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { useGeoNotes } from "../hooks/useGeoNotes";
 
 const GeoNotes: React.FC = () => {
-  const { notes, checkIn } = useGeoNotes();
+  const { notes, checkIn, deleteNote } = useGeoNotes();
   const mapRef = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
@@ -26,6 +26,29 @@ const GeoNotes: React.FC = () => {
     }
   }, [notes]);
 
+  useEffect(() => {
+    if (mapRef.current) {
+      // trước tiên clear tất cả marker cũ trước khi vẽ lại
+      mapRef.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          mapRef.current?.removeLayer(layer);
+        }
+      });
+
+      notes.forEach((note) => {
+        L.marker([note.lat, note.lng])
+          .addTo(mapRef.current!)
+          .bindPopup(note.text);
+      });
+    }
+  }, [notes]);
+
+  const focusNote = (lat: number, lng: number) => {
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lng], 16); // zoom tới note
+    }
+  };
+
   const handleCheckIn = async () => {
     const text = prompt("Enter your note:") || "No title";
     await checkIn(text);
@@ -40,15 +63,29 @@ const GeoNotes: React.FC = () => {
       <h3>Check Point List</h3>
       <ul className="notes-list">
         {notes.map((n) => (
-          <a
-            href={`https://www.google.com/maps?q=${n.lat},${n.lng}`}
-            target="_blank"
-            rel="noreferrer"
+          <li
+            className="note-item"
+            key={n.id}
+            onClick={() => focusNote(n.lat, n.lng)}
+            style={{ cursor: "pointer" }}
           >
-            <li className="note-item" key={n.id}>
+            <span className="note-text">
               {n.text} ({n.lat.toFixed(5)}, {n.lng.toFixed(5)})
-            </li>
-          </a>
+            </span>
+            <div className="note-actions">
+              <a
+                href={`https://www.google.com/maps?q=${n.lat},${n.lng}`}
+                target="_blank"
+                rel="noreferrer"
+                className="guide-link"
+              >
+                🧭 Guide
+              </a>
+              <button className="delete-btn" onClick={() => deleteNote(n.id)}>
+                ❌
+              </button>
+            </div>
+          </li>
         ))}
       </ul>
     </div>

@@ -39,5 +39,9 @@ export function useGeoNotes() {
     }
   };
 
-  return { notes, checkIn };
+  const deleteNote = (id: number) => {
+    setNotes((prev) => prev.filter((note) => note.id !== id));
+  };
+
+  return { notes, checkIn, deleteNote };
 }
