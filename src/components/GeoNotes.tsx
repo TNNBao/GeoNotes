@@ -25,6 +25,25 @@ const GeoNotes: React.FC = () => {
   const mapRef = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          console.log("GPS OK:", pos.coords);
+        },
+        (err) => {
+          if (err.code === err.PERMISSION_DENIED) {
+            alert("⚠️ Vui lòng bật định vị (GPS) để sử dụng bản đồ!");
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            alert("Không thể truy cập GPS. Hãy bật định vị trong cài đặt!");
+          }
+        }
+      );
+    } else {
+      alert("Thiết bị này không hỗ trợ định vị (GPS).");
+    }
+  }, []);
+
+  useEffect(() => {
     if (!mapRef.current) {
       mapRef.current = L.map("map").setView([16.0471, 108.2068], 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
